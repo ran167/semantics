@@ -43,7 +43,7 @@ public class UploadReadServlet extends HttpServlet {
 
 	private static ILexicalDatabase db = new NictWordNet();
 
-	private static final String STOPFILENAME = "C:\\Users\\prath\\Desktop\\inhouse project\\project 4\\ABBMachineLearning\\WebContent\\stoplist.txt";
+	private static final String STOPFILENAME = "C:\\Users\\prath\\workspace1\\ABBMachineLearningVVNN\\WebContent\\stoplist.txt";
 
 	public UploadReadServlet() {
 		super();
@@ -114,7 +114,9 @@ public class UploadReadServlet extends HttpServlet {
 		System.out.println("&&&&&&&pTH:" + fileName);
 		// This will reference one line at a time
 		String line = null;
-
+		int count = 0;
+		double avg = 0.0;
+		double sum = 0.0;
 		try {
 			// FileReader reads text files in the default encoding.
 			FileReader fileReader = new FileReader(fileName);
@@ -166,10 +168,8 @@ public class UploadReadServlet extends HttpServlet {
 					PosDisplayData o = PartsOfSpeech.pos(sen2[i]);
 					a2.add(o);
 				}
-
 				request.setAttribute("poslist2", a2);
 				request.setAttribute("message", "Parts Of Speech Tagging:");
-
 				WS4JConfiguration.getInstance().setMFS(true);
 				List<Double> semvals = new ArrayList<Double>();
 				WuPalmer wuPalmer = new WuPalmer(db);
@@ -182,49 +182,70 @@ public class UploadReadServlet extends HttpServlet {
 						String[] tags2 = data2.getTags();
 						for (int i = 0; i < tags.length; i++) {
 							for (int j = 0; j < tags2.length; j++) {
-								if (tags[i].equals(tags2[j])) {
+								if (tags[i].startsWith("NN")&&tags2[j].startsWith("NN")) {
 									if (!tokens[i].equals(".")) {
-
 										boolean stopFlag1 = stopWordsList.contains(tokens[i]);
 										boolean stopFlag2 = stopWordsList.contains(tokens2[j]);
 										if (!stopFlag1 && !stopFlag2) {
-											System.out.println(
-													"Comparing semalarity for " + tokens[i] + " " + tokens2[j]);
-											double calcRelatednessOfWords = wuPalmer.calcRelatednessOfWords(tokens[i],
-													tokens2[j]);
-											if (calcRelatednessOfWords > 1.0) {
-												calcRelatednessOfWords = 1.0;
+											if(!tags[i].equals("JJ")&&!tags2[j].equals("JJ")&&!tags[i].equals("PRP")&&!tags2[j].equals("PRP")){
+												System.out.println("Tags ="+tags[i]+" "+tags2[j]);
+												System.out.println(
+														"Comparing semalarity for " + tokens[i] + " " + tokens2[j]);
+												double calcRelatednessOfWords = wuPalmer.calcRelatednessOfWords(tokens[i],
+														tokens2[j]);
+												if (calcRelatednessOfWords > 1.0) {
+													calcRelatednessOfWords = 1.0;
+												}
+												semVal = semVal + calcRelatednessOfWords;
+												System.out.println("Relatedness = " + calcRelatednessOfWords);
+												System.out.println("********");
 											}
-											semVal = semVal + calcRelatednessOfWords;
-											System.out.println("Relatedness = " + calcRelatednessOfWords);
-											System.out.println("********");
 										}
-
 									}
-
+								}
+								if (tags[i].startsWith("V")&&tags2[j].startsWith("V")) {
+									if (!tokens[i].equals(".")) {
+										boolean stopFlag1 = stopWordsList.contains(tokens[i]);
+										boolean stopFlag2 = stopWordsList.contains(tokens2[j]);
+										if (!stopFlag1 && !stopFlag2) {
+											if(!tags[i].equals("JJ")&&!tags2[j].equals("JJ")&&!tags[i].equals("PRP")&&!tags2[j].equals("PRP")){
+												System.out.println("Tags ="+tags[i]+" "+tags2[j]);
+												System.out.println(
+														"Comparing semalarity for " + tokens[i] + " " + tokens2[j]);
+												double calcRelatednessOfWords = wuPalmer.calcRelatednessOfWords(tokens[i],
+														tokens2[j]);
+												if (calcRelatednessOfWords > 1.0) {
+													calcRelatednessOfWords = 1.0;
+												}
+												semVal = semVal + calcRelatednessOfWords;
+												System.out.println("Relatedness = " + calcRelatednessOfWords);
+												System.out.println("********");
+											}
+										}
+									}
 								}
 							}
 						}
 						semvals.add(semVal);
 					}
 				}
-
 				for (Double val : semvals) {
 					System.out.println(val);
 				}
-
+				for(int i=0;i<semvals.size();i++){
+					Double val = semvals.get(i);
+					sum= sum+val;
+					count++;
+					avg = sum/count;
+				}
+				System.out.println("Average is "+avg);
 			}
-
 			bufferedReader.close();
-
 		} catch (FileNotFoundException ex) {
 			System.out.println("Unable to open file '" + fileName + "'");
 		} catch (IOException ex) {
 			System.out.println("Error reading file '" + fileName + "'");
-			// Or we could just do this:
-			// ex.printStackTrace();
 		}
-
 		RequestDispatcher rd = request.getRequestDispatcher("input.jsp");
 		rd.forward(request, response);
 	}
